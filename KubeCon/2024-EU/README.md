@@ -15,9 +15,43 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 
 [Architecture](docs/Architecture.md)
 
-## LLM
+## LLM and application
 
-[LLM](docs/LLM.md)
+### Setup vLLM
+
+### Setup Application
+[LLM driven book club for cognitive health](twilight_chat/README.md) - 
+[Twilight Chat](https://github.com/Twilight-Tales/Twilight-Chat)
+
+Twilight Chat is a virtual book club host that helps elderly to engage in reading activities, in order to help 
+mediate cognitive declines.
+
+It is powered by Chainlit, Langchain, vLLM and OpenAI GPT-4 API.
+
+### Quick Start on k8s
+
+1. Set up environment variables:
+
+    Copy `example.env` into `.env` and change the values.
+
+2. Create secrets on k8s :
+    ```bash
+    kubectl create secret generic twilight-secret --from-env-file=.env
+    ```
+   (Or `make create-secret`)
+
+3. Create pod and service:
+
+    ```bash
+    kubectl apply -f twilight-app-k8s.yaml
+    ```
+   (Or `make create-app`)
+
+4. Port forward to access the app from host:
+
+   ```bash
+   kubectl port-forward service/twilight-service 1680:1680
+   ```
 
 ## Measurement
 
