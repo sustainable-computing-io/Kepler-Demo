@@ -11,6 +11,7 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 
 [1] https://spectrum.ieee.org/ai-energy-consumption
 
+
 ## Architecture
 
 [Architecture](docs/Architecture.md)
