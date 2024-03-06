@@ -22,11 +22,11 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 1. Create a local folder (for example, `/data/huggingface-cache`) on the host machine for downloading the models:
 2. Download new models:
    ```bash
-   docker run -ti   -v /data/huggingface-cache:/root/.cache/huggingface  --entrypoint=bash vllm/vllm-openai
+   docker run -ti -v /data/huggingface-cache:/root/.cache/huggingface --entrypoint=bash vllm/vllm-openai
    ```
 3. Then inside the container, download the model:
    ```bash
-   huggingface-cli download TheBloke/Llama-2-13B-chat-GPTQ TheBloke/Mistral-7B-Instruct-v0.2-GPTQ
+   huggingface-cli download meta-llama/Llama-2-7b-chat-hf TheBloke/Llama-2-7B-chat-GPTQ TheBloke/Llama-2-13B-chat-GPTQ
    ```
 4. Run the vLLM and other monitor services:
    ```bash
@@ -38,10 +38,10 @@ in [vllm-deployment.yaml](vLLM%2Fvllm-deployment.yaml). For a complete list of s
 see [vLLM Supported Models](https://docs.vllm.ai/en/latest/models/supported_models.html).
 
 Noted that:
-1. The GPTQ (quantized version) of the model are supported by vLLM out of box. (`TheBloke/Llama-2-13B-chat-GPTQ` vs 
-   `meta-llama/Llama-2-13b-hf`)
+1. The GPTQ (quantized version) of the model are supported by vLLM out of box. (`TheBloke/Llama-2-7B-chat-GPTQ` vs 
+   `meta-llama/Llama-2-7b-hf`)
 2. For models with chat or instruction fine-tuned variants but with same model architecture, i.e., 
-   `Llama-2-13B-chat` vs `Llama-2-13b`, vLLM also supports both out of box. This feature is realized via  
+   `Llama-2-7B-chat` vs `Llama-2-7b`, vLLM also supports both out of box. This feature is realized via  
    FastChat implementation in early days but changed to the more standardized method using HuggingFace chat-template.
    For more technical details, see this PR: 
    [Add Chat Template Support to vLLM](https://github.com/vllm-project/vllm/pull/1493)
