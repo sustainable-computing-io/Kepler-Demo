@@ -1,0 +1,275 @@
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: huggingface-cache-pv-rmw
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  hostPath:
+    path: /data/huggingface-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: huggingface-cache-pvc-rmw
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: manual
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-mistral
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-mistral
+  template:
+    metadata:
+      labels:
+        app: vllm-mistral
+    spec:
+      containers:
+      - name: vllm-container-mistral
+        image: vllm/vllm-openai:latest
+        command: ["/bin/sh", "-c"]
+        args: ["python3 -m vllm.entrypoints.openai.api_server --model ${MODEL_NAME} --tensor-parallel-size 1"]
+        ports:
+        - containerPort: 8000
+          name: mistral
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: HF_TOKEN
+              name: huggingface-secret
+        - name: MODEL_NAME
+          value: "mistralai/Mistral-7B-Instruct-v0.2"
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /root/.cache/huggingface
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+          requests:
+            nvidia.com/gpu: 1
+            cpu: 500m
+            memory: 512Mi
+      volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: huggingface-cache-pvc-rmw
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-gptq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-gptq
+  template:
+    metadata:
+      labels:
+        app: vllm-gptq
+    spec:
+      containers:
+      - name: vllm-container-gptq
+        image: vllm/vllm-openai:latest
+        command: ["/bin/sh", "-c"]
+        args: ["python3 -m vllm.entrypoints.openai.api_server --model ${MODEL_NAME} --gpu-memory-utilization 0.8 --dtype float16"]
+        ports:
+        - containerPort: 8000
+          name: gptq
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: HF_TOKEN
+              name: huggingface-secret
+        - name: MODEL_NAME
+          value: "TheBloke/Mistral-7B-Instruct-v0.2-GPTQ"
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /root/.cache/huggingface
+        resources:
+          limits:
+            nvidia.com/mig-3g.20gb: 1
+          requests:
+            nvidia.com/mig-3g.20gb: 1
+            cpu: 500m
+            memory: 512Mi
+      volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: huggingface-cache-pvc-rmw
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vllm-gptq
+  name: vllm-gptq
+  namespace: default
+spec:
+  ports:
+  - port: 8000
+    targetPort: gptq
+    name: gptq
+  selector:
+    app: vllm-gptq
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-service-monitor-gptq
+  namespace: monitoring
+spec:
+  endpoints:
+  - interval: 15s
+    port: gptq
+    relabelings:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: instance
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app: vllm-gptq
+  namespaceSelector:
+    matchNames:
+    - default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: vllm-mistral
+  name: vllm-mistral
+  namespace: default
+spec:
+  ports:
+  - port: 8000
+    targetPort: mistral
+    name: mistral
+  selector:
+    app: vllm-mistral
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-service-monitor-mistral
+  namespace: monitoring
+spec:
+  endpoints:
+  - interval: 15s
+    port: mistral
+    relabelings:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: instance
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app: vllm-mistral
+  namespaceSelector:
+    matchNames:
+    - default   
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+  name: prometheus-k8s-gpu-operator
+  namespace: gpu-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch  
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+  name: prometheus-k8s-gpu-operator
+  namespace: gpu-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-k8s-gpu-operator
+subjects:
+- kind: ServiceAccount
+  name: prometheus-k8s
+  namespace: monitoring
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gpu-operator
+  namespace: monitoring
+spec:
+  endpoints:
+  - interval: 5s
+    port: gpu-metrics
+    relabelings:
+    - action: replace
+      regex: (.*)
+      replacement: $1
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: instance
+    scheme: http
+  jobLabel: app.kubernetes.io/name
+  namespaceSelector:
+    matchNames:
+    - gpu-operator
+  selector:
+    matchLabels:
+      app: nvidia-dcgm-exporter
