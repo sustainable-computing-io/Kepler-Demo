@@ -163,6 +163,8 @@ kind: Service
 metadata:
   labels:
     app: vllm-llama-7b
+    model_family: meta-llama
+    model_name: Llama-2-7B-chat-hf
   name: vllm-llama-7b
   namespace: default
 spec:
@@ -178,6 +180,8 @@ kind: Service
 metadata:
   labels:
     app: vllm-llama-7b-gptq
+    model_family: TheBloke
+    model_name: Llama-2-7B-chat-GPTQ
   name: vllm-llama-7b-gptq
   namespace: default
 spec:
@@ -193,6 +197,8 @@ kind: Service
 metadata:
   labels:
     app: vllm-llama-13b-gptq
+    model_family: TheBloke
+    model_name: Llama-2-13B-chat-GPTQ
   name: vllm-llama-13b-gptq
   namespace: default
 spec:
