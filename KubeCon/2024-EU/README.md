@@ -24,7 +24,7 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
    ```bash
    docker run -ti -v /data/huggingface-cache:/root/.cache/huggingface --entrypoint=bash vllm/vllm-openai
    ```
-3. Then inside the container, download the model:
+3. Then inside the container, download the models:
    ```bash
    huggingface-cli download meta-llama/Llama-2-7b-chat-hf TheBloke/Llama-2-7B-chat-GPTQ TheBloke/Llama-2-13B-chat-GPTQ
    ```
@@ -33,8 +33,48 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
    kubectl apply -f vLLM/vllm-deployment.yaml
    ```
 
-If you want to use other models, just change the value of `MODEL_NAME` 
-in [vllm-deployment.yaml](vLLM%2Fvllm-deployment.yaml). For a complete list of support models, 
+5. If you want to use vLLM-router to have a unified API, follow these steps:
+
+   Remove the vanilla vLLM deployment:
+   ```bash
+   kubectl delete -f vLLM/vllm-deployment.yaml
+   ```
+   
+6. Clone the vLLM Router repository:
+
+   ```bash
+   git clone https://github.com/yourusername/vllm-router.git
+   ```
+   
+7. Deploy the vLLM Router using Helm:
+
+   ```bash
+   cd vllm-chart
+   ```
+
+   Update the `values.yaml` file with the desired configuration for your vLLM models and the vLLM Router.
+
+   Install the Helm chart:
+
+   ```bash
+   helm install vllm-router .
+   ```
+
+   This command will deploy the vLLM Router and the configured vLLM models in your Kubernetes cluster.
+
+8. Access the vLLM Router:
+
+   ```bash
+   kubectl port-forward service/vllm-router 8000:8000
+   ```
+
+   The vLLM Router will be accessible at `http://localhost:8000`.
+
+
+If you want to use other models, change the value under the `models` tab 
+in 
+[vllm-router/vllm-chart/values.yaml](https://github.com/LLM-inference-router/vllm-router/blob/main/vllm-chart/values.yaml). 
+For a complete list of support models, 
 see [vLLM Supported Models](https://docs.vllm.ai/en/latest/models/supported_models.html).
 
 Noted that:
