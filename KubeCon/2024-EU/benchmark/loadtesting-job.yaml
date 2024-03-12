@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vllm-benchmark-job
+  namespace: default
+  labels:
+    jobgroup: benchmarking
+spec:
+  template:
+    spec:
+      containers:
+      - name: vllm-benchmark
+        image: quay.io/chenw615/vllm-benchmark:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          python3 benchmark_serving_concurrency.py --backend openai-chat --host $HOST --port $PORT --endpoint /v1/chat/completions --max-concurrency $MAX_CONCURRENCY --num-prompts $NUM_PROMPT --model $MODEL --dataset ShareGPT_V3_unfiltered_cleaned_split.json --save-result &&
+          cp /app/vllm/benchmarks/*.json /data/results/
+        envFrom:
+        - configMapRef:
+            name: vllm-benchmark-config
+        env:
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: huggingface-secret
+              key: HF_TOKEN
+        volumeMounts:
+        - name: benchmark-results
+          mountPath: /data/results
+      volumes:
+      - name: benchmark-results
+        persistentVolumeClaim:
+          claimName: benchmark-results-pvc
+      restartPolicy: Never
+  backoffLimit: 1

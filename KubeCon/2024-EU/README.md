@@ -17,7 +17,7 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 
 ## LLM and application
 
-### Setup vLLM
+### Setup vLLM and vLLM Router
 
 1. Create a local folder (for example, `/data/huggingface-cache`) on the host machine for downloading the models:
 2. Download new models:
@@ -35,26 +35,26 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 
 5. If you want to use vLLM-router to have a unified API, follow these steps:
 
-   Remove the vanilla vLLM deployment:
+   1. Remove the vanilla vLLM deployment:
    ```bash
    kubectl delete -f vLLM/vllm-deployment.yaml
    ```
    
-6. Clone the vLLM Router repository:
+   2. Clone the vLLM Router repository:
 
    ```bash
-   git clone https://github.com/yourusername/vllm-router.git
+   https://github.com/LLM-inference-router/vllm-router.git
    ```
-   
-7. Deploy the vLLM Router using Helm:
+
+   3. Deploy the vLLM Router using Helm:
 
    ```bash
    cd vllm-chart
    ```
 
-   Update the `values.yaml` file with the desired configuration for your vLLM models and the vLLM Router.
+   4. Update the `values.yaml` file with the desired configuration for your vLLM models and the vLLM Router.
 
-   Install the Helm chart:
+   5. Install the Helm chart:
 
    ```bash
    helm install vllm-router .
@@ -62,7 +62,7 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 
    This command will deploy the vLLM Router and the configured vLLM models in your Kubernetes cluster.
 
-8. Access the vLLM Router:
+7. Access the vLLM Router:
 
    ```bash
    kubectl port-forward service/vllm-router 8000:8000
@@ -88,7 +88,7 @@ Noted that:
 3. To add a new models to vLLM, please refer to: 
    [vLLM Adding a New Model](https://docs.vllm.ai/en/latest/models/adding_model.html)
 
-### Setup Application
+### Setup Twilight Chat Application
 [LLM driven book club for cognitive health](twilight_chat/README.md) - 
 [Twilight Chat](https://github.com/Twilight-Tales/Twilight-Chat)
 
@@ -123,6 +123,10 @@ It is powered by Chainlit, Langchain, vLLM and OpenAI GPT-4 API.
    ```bash
    kubectl port-forward service/twilight-service 1680:1680
    ```
+
+## Benchmarking
+[Benchmark](docs/Benchmark.md)
+
 
 ## Measurement
 
