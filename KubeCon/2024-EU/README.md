@@ -13,7 +13,30 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 
 ## Architecture
 
+Please follow the tutorial below to prepare your infrastructure.
 [Architecture](docs/Architecture.md)
+
+To check your allocatable GPUs, you can run the following command with output to verify.
+
+```bash
+kubectl get nodes -o json | jq '.items[] | {name: .metadata.name, allocatable: .status.allocatable}'
+
+{
+  "name": "host-xxx",
+  "allocatable": {
+    "cpu": "112",
+    "ephemeral-storage": "859137426853",
+    "hugepages-1Gi": "0",
+    "hugepages-2Mi": "0",
+    "memory": "1056173080Ki",
+    "nvidia.com/gpu": "1",
+    "nvidia.com/mig-1g.5gb": "1",
+    "nvidia.com/mig-2g.10gb": "1",
+    "nvidia.com/mig-3g.20gb": "1",
+    "pods": "110"
+  }
+}
+```
 
 ## LLM and application
 
