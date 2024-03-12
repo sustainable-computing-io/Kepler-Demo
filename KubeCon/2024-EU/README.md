@@ -14,6 +14,7 @@ Specifically in this demo, we will delve into the cutting-edge realm of energy i
 ## Architecture
 
 Please follow the tutorial below to prepare your infrastructure.
+
 [Architecture](docs/Architecture.md)
 
 To check your allocatable GPUs, you can run the following command with output to verify.
